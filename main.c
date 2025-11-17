@@ -12,10 +12,10 @@
 #define g 9.81
 #define PI 3.141
 
-#define WIDTH 150 // keep them dividable by 2
+#define WIDTH 130 // keep them dividable by 2
 #define HEIGHT 80 // keep them dividable by 2
 #define PIXELS_PER_METER 10.
-#define GLOBAL_COLLISIONDAMPING .9 // both velocities get multiplied by this value at collision
+#define GLOBAL_COLLISIONDAMPING 1//.9 // both velocities get multiplied by this value at collision
 #define EXTERN_MAX_FORCE 1250.
 // ansi codes
 #define ESCAPE_CODE "\x1B["
@@ -166,6 +166,14 @@ void ball_draw(ball_t* ball)
 	}
 }
 
+float ball_getEnergy(ball_t* ball)
+{	
+	float kinEnergy = 0.5f * ball->m * pow(v2_len(ball->vel), 2);
+	float potEnergy = ball->m * g * (HEIGHT - ball->pos.y) / PIXELS_PER_METER;
+
+	return kinEnergy + potEnergy;
+}
+
 void ball_handleMouseMovement(ball_t* ball, v2 mousePos)
 {
 	// assume ball handle is not NULL
@@ -305,6 +313,11 @@ int main(){
 	float cpu_time_used;
 	float cpu_time_avg = 0.0019; // a value that is near the expected value to shorten the settle time
 
+	// energy calc /////////////
+	float initEnergySys = 0;
+	float currentEnergySys = 0;
+
+
 	// init balls ///////////////////////////////////
 	const int BALL_COUNT = 40;
 	ball_t ballArr[BALL_COUNT];
@@ -315,10 +328,10 @@ int main(){
 		while(touchesAnotherBall)
 		{
 			touchesAnotherBall = false;
-			rad = 4;//(float)(rand()%5) + 2;
+			rad = (float)(rand()%5) + 2;
 			x = rad + (float)(rand()%(WIDTH - 2*(int)rad));
 			y = rad + (float)(rand()%(HEIGHT - 2*(int)rad));
-			m = rad;
+			m = 4.f/3.f * PI * pow(rad, 3.);
 			for (int j = i-1; j >= 0; --j) // iterate over all previous balls and check if the distance is less than the sum of the radi
 			{
 				v2 connectionVec = v2_sub((v2){x, y}, ballArr[j].pos);
@@ -331,8 +344,10 @@ int main(){
 			.pos = (v2){x, y},
 			.vel = (v2){0., 0.},
 			.rad = rad,
-			.m = 5*m,
+			.m = m,
 		};
+
+		initEnergySys += ball_getEnergy(&ballArr[i]);
 	}
 	
 	printf(HIDECURSOR_CODE CLEAR_CODE);
@@ -432,9 +447,11 @@ int main(){
 		
 		
 		
-		
+		currentEnergySys = 0;
 		for (int i = 0; i < BALL_COUNT; ++i)
 		{
+			currentEnergySys += ball_getEnergy(&ballArr[i]);
+
 			for (int j = 0; j < BALL_COUNT; ++j)
 			{
 				if ( i != j)
@@ -449,6 +466,8 @@ int main(){
 		mvwprintw(gui, 2, 2, "=> maximale Frequenz: %.2f Hz", 1/cpu_time_avg);
 		mvwprintw(gui, 4, 2, "Neuer Ball | Radius: %.2f\t(hoch, runter)", currentRad);
 		mvwprintw(gui, 5, 2, "Neuer Ball | Masse: %.2f\t(links, rechts)", currentM);
+		mvwprintw(gui, 7, 2, "Gesamt Energie bei Start: %.2fJ", initEnergySys);
+		mvwprintw(gui, 8, 2, "Momentane Gesamt Energie: %.2fJ", currentEnergySys);
 		wrefresh(gui);
 		wrefresh(mainWin);
 		
