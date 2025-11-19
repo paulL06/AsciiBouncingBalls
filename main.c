@@ -11,7 +11,7 @@
 #define FPS 300.0f
 #define g 9.81
 #define PI 3.141
-#define MULTIPLICATOR 3 // scales the window ( only affects the visualization not the values of the objects )
+#define MULTIPLICATOR 1 // scales the window ( only affects the visualization not the values of the objects )
 #define WIDTH 130 // keep them dividable by 2
 #define HEIGHT 80 // keep them dividable by 2
 #define PIXELS_PER_METER 10.
@@ -35,7 +35,7 @@ void disp_clear()
 	memset(disp, 0, sizeof(disp));
 }
 void disp_draw(WINDOW* win){
-	char line[WIDTH * MULTIPLICATOR];
+	char line[WIDTH * MULTIPLICATOR + 1];
 	for ( int y = 0; y < HEIGHT * MULTIPLICATOR; y += 2)
 	{
 		
@@ -45,7 +45,8 @@ void disp_draw(WINDOW* win){
 			int index = disp[y+1][x] << 1 | disp[y][x];
 			line[x] = symbols[index];
 		}
-		mvwprintw(win, y/2, 0, line);
+		line[WIDTH * MULTIPLICATOR] = 0;
+		mvwprintw(win, y/2, 0, "%s", line);
 	}
 }
 

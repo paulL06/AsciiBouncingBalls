@@ -10,6 +10,8 @@ also benutze ich jetzt eine Mischung von beidem :)
 
 GUI mit raylib war mir zu langweilig und was sieht schon besser aus als Grafiken, die im Terminal dargestellt sind.
 
+Hier und da sind auch noch Fragmente, von Sachen, die ich mal machen wollte ( zB. Bälle hinzufügen )
+
 ## Installation von ncurses
 Ich habe nur ein Macbook, also konnte ich es nicht auf anderen Plattformen testen / war mir zu viel Aufwand es zu auf anderen Plattformen zu testen. Deshalb:
 hat ✨Chatty✨ für mich die Anleitung geschrieben, ich hoffe sie stimmt. Auf MacOs sollte es auf jedenfall funktionieren:)
