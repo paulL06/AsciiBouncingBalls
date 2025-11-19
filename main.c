@@ -11,12 +11,14 @@
 #define FPS 300.0f
 #define g 9.81
 #define PI 3.141
-
+#define MULTIPLICATOR 3 // scales the window ( only affects the visualization not the values of the objects )
 #define WIDTH 130 // keep them dividable by 2
 #define HEIGHT 80 // keep them dividable by 2
 #define PIXELS_PER_METER 10.
-#define GLOBAL_COLLISIONDAMPING 1//.9 // both velocities get multiplied by this value at collision
-#define EXTERN_MAX_FORCE 1250.
+#define GLOBAL_COLLISIONDAMPING .9 // both velocities get multiplied by this value at collision
+#define EXTERN_MAX_FORCE 5000.
+#define BALL_COUNT 20
+
 // ansi codes
 #define ESCAPE_CODE "\x1B["
 #define CLEAR_CODE ESCAPE_CODE"2J"
@@ -26,18 +28,18 @@
 
 
 // disp mat
-bool disp[HEIGHT][WIDTH] = {0};
+bool disp[HEIGHT * MULTIPLICATOR][WIDTH * MULTIPLICATOR] = {0};
 
 void disp_clear()
 {
-	memset(disp, 0, sizeof(bool) * HEIGHT * WIDTH);
+	memset(disp, 0, sizeof(disp));
 }
 void disp_draw(WINDOW* win){
-	char line[WIDTH];
-	for ( int y = 0; y < HEIGHT; y += 2)
+	char line[WIDTH * MULTIPLICATOR];
+	for ( int y = 0; y < HEIGHT * MULTIPLICATOR; y += 2)
 	{
 		
-		for ( int x = 0; x < WIDTH; ++x)
+		for ( int x = 0; x < WIDTH * MULTIPLICATOR; ++x)
 		{
 			char symbols[] = {' ','"', '_', 'O'};
 			int index = disp[y+1][x] << 1 | disp[y][x];
@@ -146,20 +148,21 @@ void ball_update(ball_t* ball)
 
 void ball_draw(ball_t* ball)
 {
-	v2* pos = &ball->pos;
-	
-	int startX = (int)pos->x - (int)ball->rad - 2;
-	int startY = (int)pos->y - (int)ball->rad - 2;
+	v2 pos = v2_mult(ball->pos, MULTIPLICATOR);
+	float rad = ball->rad * MULTIPLICATOR;
 
-	for ( int y = startY; y < startY + 2* (int)ball->rad + 4; ++y)
+	int startX = (int)pos.x - (int)rad - 2;
+	int startY = (int)pos.y - (int)rad - 2;
+
+	for ( int y = startY; y < startY + 2* (int)rad + 4; ++y)
 	{
-		for ( int x = startX; x < startX + 2* (int)ball->rad + 4; ++x)
+		for ( int x = startX; x < startX + 2* (int)rad + 4; ++x)
 		{
-			float diffX = pos->x - (float)x;
-			float diffY = pos->y - (float)y;
+			float diffX = pos.x - (float)x;
+			float diffY = pos.y - (float)y;
 			float dist = sqrtf(diffX * diffX + diffY * diffY);
 
-			if (dist < ball->rad)
+			if (dist < rad)
 				disp[y][x] = 1;
 
 		}	
@@ -293,15 +296,15 @@ int main(){
 	// ncurses gui window: ////////
 	int guiHeight = 15;
 	int guiWidth = 50;
-	int guiX = WIDTH+1;
+	int guiX = WIDTH*MULTIPLICATOR+1;
 	int guiY = 0;
 	WINDOW* gui = newwin(guiHeight, guiWidth, guiY, guiX);
 	wbkgd(gui, COLOR_PAIR(2));
 	box(gui, 0 ,0);
 	
 	//ncurses main window: //////
-	int mainHeight = HEIGHT/2+1;
-	int mainWidth = WIDTH+2;
+	int mainHeight = (HEIGHT/2)*MULTIPLICATOR+1;
+	int mainWidth = WIDTH*MULTIPLICATOR+2;
 	int mainX = 0;
 	int mainY = 0;
 	WINDOW* mainWin = newwin(mainHeight, mainWidth, mainY, mainX);
@@ -319,7 +322,6 @@ int main(){
 
 
 	// init balls ///////////////////////////////////
-	const int BALL_COUNT = 40;
 	ball_t ballArr[BALL_COUNT];
 	for (int i = 0; i < BALL_COUNT; ++i)
 	{
@@ -342,7 +344,7 @@ int main(){
 
 		ballArr[i] = (ball_t){
 			.pos = (v2){x, y},
-			.vel = (v2){0., 0.},
+			.vel = (v2){0, 0},
 			.rad = rad,
 			.m = m,
 		};
@@ -377,8 +379,9 @@ int main(){
 			case KEY_MOUSE:
 			{
 				MEVENT event;
-      			if (getmouse(&event) == OK) {
+				if (getmouse(&event) == OK) {
 					event.y *= 2;
+					mousePos = v2_div((v2){event.x, event.y}, MULTIPLICATOR);
         			// mouse fine ye
 					switch(event.bstate)
 					{
@@ -390,8 +393,8 @@ int main(){
 						
 								for (int i = 0; i < BALL_COUNT; ++i)
 								{
-									v2 mouseVec = {event.x, event.y};
-									v2 distVec = v2_sub(mouseVec, ballArr[i].pos);
+									
+									v2 distVec = v2_sub(mousePos, ballArr[i].pos);
 									float dist = v2_len(distVec);
 									if ( dist < ballArr[i].rad )
 									{
@@ -409,10 +412,10 @@ int main(){
 							}
 						}break;
 					}
-					if (heldBall)
+					/*if (heldBall)
 					{
 						mousePos = (v2){(float)event.x, (float)event.y};
-					}
+					}*/
 				}
 			}break;
 			case KEY_EXIT:
